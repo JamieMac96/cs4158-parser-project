@@ -1,29 +1,32 @@
 %{
-#include "mtokens.h"
+#include "y.tab.h"
 #include <string.h>
 
-void printToken(char*, int);
+char* temp;
+
 %}
+
+%option yylineno
 
 %%
 
-[\t ]+ /*Ignore whitespace*/
-
-(?i:BEGINING)          { printToken("BEGINING", BEGINING); }
-(?i:BODY)               { printToken("BODY", BODY); }
-(?i:END)                { printToken("END", END); }
-(?i:MOVE)               { printToken("MOVE", MOVE); }
-(?i:ADD)                { printToken("ADD", ADD); }
-(?i:INPUT)              { printToken("INPUT", INPUT); }
-(?i:PRINT)              { printToken("PRINT", PRINT); }
-(?i:TO)                 { printToken("TO", TO); }
-[Xx]+                   { printToken("INTEGER SIZE", INTEGER_SIZE); }
-;                       { printToken("SEMICOLON", SEMICOLON); }
-\.                      { printToken("TERMINATOR", TERMINATOR); }
-[A-Za-z][A-Za-z0-9\-]*  { printToken("IDENTIFIER", IDENTIFIER);}
-\"(\\.|[^"\\])*\"       { printToken("STRING LITERAL", STRING_LITERAL); }
-[0-9]+                  { printToken("INTEGER", INTEGER); }
-.                       { printf("Invalid Syntax \n"); return 0;}
+[\t ]+                  {}
+(?i:BEGINING)           { return BEGINING; }
+(?i:BODY)               { return BODY; }
+(?i:END)                { return END; }
+(?i:MOVE)               { return MOVE; }
+(?i:ADD)                { return ADD; }
+(?i:INPUT)              { return INPUT; }
+(?i:PRINT)              { return PRINT; }
+(?i:TO)                 { return TO; }
+;                       { return SEMICOLON; }
+\n                      {}
+[0-9]+                  { yylval.number=atoi(yytext); return INTEGER; }
+[Xx]+                   { yylval.size=strlen(yytext); return INT_SIZE; }
+\.                      { return TERMINATOR; }
+[A-Za-z][A-Za-z0-9\-]*  { temp = (char*) calloc(strlen(yytext)+1, sizeof(char)); strcpy(temp, yytext); yylval.name = temp; return IDENTIFIER;}
+\"(\\.|[^"\\])*\"       { return STRING_LITERAL; }
+.                       { return 0;}
 
 %%
 
@@ -31,11 +34,4 @@ int yywrap(void){
     return 1;
 }
 
-int main(){
-    yylex();
-    return 0;
-}
 
-void printToken(char* name, int type){
-    printf("%s: %d\n", name, type);
-}
